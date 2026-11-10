@@ -118,6 +118,11 @@ header.top{position:static}
 @media (max-width:480px){.create{grid-template-columns:1fr}}
 .link{font:13px ui-monospace,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;overflow-wrap:anywhere}
 .stat{color:var(--muted);font-size:13px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px}
+.pick .opt{font-size:13px}
+details.sp summary{cursor:pointer;font-weight:600;font-size:14px;padding:6px 0}
+.editor{border-top:1px dashed var(--line);padding-top:10px}
 </style>
 </head>
 <body>
@@ -147,6 +152,7 @@ header.top{position:static}
       <div class="card"><div class="f">
         <label class="l" for="label">Nom du client (visible par vous seul)</label>
         <div class="create"><input type="text" id="label" maxlength="120" placeholder="Ex. Boulangerie Dupont"><button class="btn" id="create" type="button">Créer le lien</button></div>
+        <details class="sp"><summary>Sections à afficher au client</summary><div id="pickhost"></div></details>
         <div id="created" hidden>
           <p class="small" style="margin:8px 0 6px">Lien à envoyer au client :</p>
           <div class="link" id="newlink"></div>
@@ -163,6 +169,7 @@ header.top{position:static}
   </div>
 </main>
 
+<script src="schema.js"></script>
 <script>
 (function(){
 "use strict";
@@ -183,6 +190,25 @@ function copy(text,btn){
   else window.prompt("Copiez ce lien :",text);
 }
 function fmtDate(s){try{return new Date(s).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"})}catch(e){return s}}
+function makePicker(sel){
+  var wrap=el("div",{});
+  var presets=el("div",{class:"btns",style:"margin:8px 0"});
+  var grid=el("div",{class:"pick"});
+  var ins=[];
+  S.forEach(function(s){
+    if(!s.n||s.pro)return;
+    var i=el("input",{type:"checkbox"});i.value=s.n;
+    i.checked=!sel||sel.indexOf(s.n)>-1;
+    ins.push(i);
+    grid.appendChild(el("label",{class:"opt"},[i,el("span",{text:s.n+". "+s.title+(s.tag?" ("+s.tag.toLowerCase()+")":"")})]));
+  });
+  function setAll(fn){ins.forEach(function(i){i.checked=fn(Number(i.value))})}
+  var a=el("button",{type:"button",class:"btn alt",text:"Tout cocher"});a.addEventListener("click",function(){setAll(function(){return true})});
+  var v=el("button",{type:"button",class:"btn alt",text:"Site vitrine (sans rendez-vous ni boutique)"});v.addEventListener("click",function(){setAll(function(n){return n!==14&&n!==15})});
+  presets.appendChild(a);presets.appendChild(v);wrap.appendChild(presets);wrap.appendChild(grid);
+  return {node:wrap,get:function(){var on=ins.filter(function(i){return i.checked}).map(function(i){return Number(i.value)});return on.length===ins.length?null:on}};
+}
+var mainPick=makePicker(null);$("pickhost").appendChild(mainPick.node);
 async function load(){
   var list=$("list");
   try{
@@ -191,7 +217,7 @@ async function load(){
     if(!rows.length){list.appendChild(el("div",{class:"empty",text:"Aucune fiche pour l’instant. Créez le lien d’un premier client ci-dessus."}));return}
     rows.forEach(function(r){
       var row=el("div",{class:"row"});
-      row.appendChild(el("div",{class:"t"},[el("strong",{text:r.label||"Sans nom"}),el("span",{class:"stat",text:r.answers+" réponses · "+r.files+" document"+(r.files>1?"s":"")+" · modifiée "+fmtDate(r.updated_at)})]));
+      row.appendChild(el("div",{class:"t"},[el("strong",{text:r.label||"Sans nom"}),el("span",{class:"stat",text:r.answers+" réponses · "+r.files+" document"+(r.files>1?"s":"")+" · "+(r.sections?r.sections.length+" sections":"toutes les sections")+" · modifiée "+fmtDate(r.updated_at)})]));
       var b=el("div",{class:"btns"});
       var open=el("a",{class:"btn",href:linkFor(r.id,true),target:"_blank",rel:"noopener",text:"Ouvrir la fiche",style:"text-decoration:none"});
       var cp=el("button",{class:"btn alt",type:"button",text:"Copier le lien client"});
@@ -201,7 +227,16 @@ async function load(){
         if(del.dataset.arm!=="1"){del.dataset.arm="1";del.textContent="Confirmer la suppression";setTimeout(function(){del.dataset.arm="";del.textContent="Supprimer"},4000);return}
         rpc("admin_delete",{p_key:KEY,p_id:r.id}).then(load,function(){del.textContent="Échec"});
       });
-      b.appendChild(open);b.appendChild(cp);b.appendChild(del);row.appendChild(b);list.appendChild(row);
+      var sb=el("button",{class:"btn alt",type:"button",text:"Sections affichées"});
+      var ed=el("div",{class:"editor",hidden:""});ed.hidden=true;
+      sb.addEventListener("click",function(){
+        if(!ed.hidden){ed.hidden=true;return}
+        ed.textContent="";var pk=makePicker(r.sections);ed.appendChild(pk.node);
+        var sv=el("button",{class:"btn",type:"button",text:"Enregistrer"});
+        sv.addEventListener("click",function(){sv.disabled=true;rpc("admin_set_sections",{p_key:KEY,p_id:r.id,p_sections:pk.get()}).then(load,function(){sv.disabled=false;sv.textContent="Échec, réessayer"})});
+        ed.appendChild(el("div",{style:"margin-top:10px"},[sv]));ed.hidden=false;
+      });
+      b.appendChild(open);b.appendChild(cp);b.appendChild(sb);b.appendChild(del);row.appendChild(b);row.appendChild(ed);list.appendChild(row);
     });
   }catch(e){list.textContent="";list.appendChild(el("div",{class:"empty",text:"Impossible de charger la liste."}))}
 }
@@ -218,7 +253,7 @@ $("reload").addEventListener("click",load);
 $("create").addEventListener("click",async function(){
   var btn=$("create");btn.disabled=true;
   try{
-    var id=await rpc("admin_create",{p_key:KEY,p_label:$("label").value.trim()});
+    var id=await rpc("admin_create",{p_key:KEY,p_label:$("label").value.trim(),p_sections:mainPick.get()});
     var url=linkFor(id,false);
     $("newlink").textContent=url;$("created").hidden=false;$("label").value="";
     $("copynew").onclick=function(){copy(url,$("copynew"))};
