@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Administration fiches NéoPix</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+
+/* Layout: en-tête fixe avec progression et navigation par section, puis formulaire en colonne unique (max 760px) avec section Documents. */
+:root{
+  --bg:#f4f7f9;
+  --surface:#ffffff;
+  --ink:#14293f;
+  --muted:#5b6b7b;
+  --line:#d5dee6;
+  --accent:#00799a;
+  --accent-ink:#ffffff;
+  --accent-soft:#dff1f6;
+  --star:#b4570f;
+  --ok:#1f7a4d;
+  --warn:#a65a00;
+  --font-display:"Space Grotesk","Segoe UI",system-ui,sans-serif;
+  --font-body:"Inter","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1824;--surface:#12253a;--ink:#e6eef5;--muted:#98abbc;--line:#27415a;
+  --accent:#3cc7e3;--accent-ink:#06202b;--accent-soft:#12394c;--star:#f0a15c;--ok:#5fd19b;--warn:#f0b860;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1824;--surface:#12253a;--ink:#e6eef5;--muted:#98abbc;--line:#27415a;
+  --accent:#3cc7e3;--accent-ink:#06202b;--accent-soft:#12394c;--star:#f0a15c;--ok:#5fd19b;--warn:#f0b860;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+.wrap{max-width:760px;margin:0 auto}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);
+  margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:12px max(16px,env(safe-area-inset-left,0px)) 0;border-bottom:1px solid var(--line)}
+.bar{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-family:var(--font-display);font-weight:700;font-size:20px;letter-spacing:-.01em}
+.brand b{color:var(--accent);font-weight:700}
+.bar .sp{flex:1}
+.status{font-size:12.5px;color:var(--muted)}
+.status[data-s="err"]{color:var(--warn)}
+.status[data-s="ok"]{color:var(--ok)}
+.prog{max-width:760px;margin:10px auto 0;display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)}
+.prog .track{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.prog .fill{height:100%;width:0;background:var(--accent);transition:width .3s}
+nav.chips{max-width:760px;margin:8px auto 0;display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;scrollbar-width:thin}
+nav.chips button{flex:none;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:500 12.5px var(--font-body);
+  padding:5px 10px;border-radius:999px;cursor:pointer;white-space:nowrap}
+nav.chips button[data-done="1"]{background:var(--accent-soft);border-color:var(--accent)}
+nav.chips button:hover{border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.intro{padding:28px 0 8px}
+.intro h1{font-family:var(--font-display);font-size:clamp(26px,5vw,34px);line-height:1.15;margin:0 0 8px;text-wrap:balance;letter-spacing:-.015em}
+.intro p{margin:0 0 6px;color:var(--muted);max-width:62ch}
+.legend{font-size:13px;color:var(--muted)}
+.legend .st{color:var(--star);font-weight:700}
+.banner{margin:12px 0;padding:10px 14px;border:1px solid var(--warn);border-radius:6px;color:var(--warn);font-size:13.5px;background:var(--surface)}
+.part{font-family:var(--font-display);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);
+  margin:40px 0 4px;padding-top:14px;border-top:2px solid var(--accent)}
+.part small{display:block;text-transform:none;letter-spacing:0;color:var(--muted);font:400 13.5px var(--font-body);margin-top:2px}
+section.sec{margin-top:22px;scroll-margin-top:150px}
+section.sec h2{font-family:var(--font-display);font-size:20px;margin:0 0 4px;letter-spacing:-.01em;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+section.sec h2 .n{color:var(--accent)}
+section.sec .tag{font:500 11.5px var(--font-body);color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:1px 8px}
+section.sec .note{color:var(--muted);font-size:13.5px;margin:0 0 8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 18px}
+.f{padding:14px 0;border-bottom:1px solid var(--line);display:grid;gap:6px}
+.f:last-child{border-bottom:0}
+.f label.l,.f .l{font-weight:600;font-size:14px}
+.f .st{color:var(--star);margin-right:4px}
+input[type=text],textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px 11px}
+textarea{min-height:76px;resize:vertical}
+input[type=text]:focus,textarea:focus{border-color:var(--accent)}
+.opts{display:flex;flex-wrap:wrap;gap:8px 10px}
+.opt{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:6px;padding:6px 11px;cursor:pointer;background:var(--bg);font-size:14px}
+.opt:has(input:checked){background:var(--accent-soft);border-color:var(--accent)}
+.opt input{accent-color:var(--accent);width:16px;height:16px;margin:0}
+.opt:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.sub{margin-top:2px}
+/* documents */
+.drop{border:2px dashed var(--line);border-radius:8px;padding:22px 16px;text-align:center;background:var(--surface);color:var(--muted)}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop strong{color:var(--ink)}
+.btn{font:600 14px var(--font-body);border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);border-radius:6px;padding:8px 14px;cursor:pointer}
+.btn.alt{background:transparent;color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:default}
+.files{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px}
+.files li{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 12px;min-width:0}
+.files .nm{flex:1;min-width:0;overflow-wrap:anywhere}
+.files .meta{font-size:12px;color:var(--muted)}
+.files a{color:var(--accent);font-weight:600}
+.files button{background:none;border:0;color:var(--muted);cursor:pointer;font:inherit;text-decoration:underline}
+.small{font-size:13px;color:var(--muted)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+.empty{color:var(--muted);font-size:14px;padding:6px 0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+[hidden]{display:none!important}
+
+html{color-scheme:light dark}
+body{margin:0}
+[hidden]{display:none!important}
+header.top{position:static}
+.row{display:grid;gap:10px;padding:14px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row .t{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;min-width:0}
+.row .t strong{font-size:16px;overflow-wrap:anywhere}
+.row .btns{display:flex;gap:8px;flex-wrap:wrap}
+.row .btns .btn{padding:6px 11px;font-size:13px}
+.btn.danger{border-color:var(--warn);color:var(--warn);background:transparent}
+.create{display:grid;grid-template-columns:1fr auto;gap:10px}
+@media (max-width:480px){.create{grid-template-columns:1fr}}
+.link{font:13px ui-monospace,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;overflow-wrap:anywhere}
+.stat{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="bar">
+    <div class="brand">Néo<b>Pix</b></div>
+    <div class="sp"></div>
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+  </div>
+  <div style="height:10px"></div>
+</header>
+<main class="wrap">
+  <div class="intro"><h1>Fiches clients</h1><p>Créez un lien par client, suivez les réponses et ouvrez chaque fiche en mode prestataire.</p></div>
+
+  <section class="sec" id="login">
+    <h2><span>Clé d’administration</span></h2>
+    <div class="card"><div class="f">
+      <label class="l" for="key">Saisissez votre clé. Elle reste enregistrée dans ce navigateur uniquement.</label>
+      <div class="create"><input type="text" id="key" autocomplete="off" spellcheck="false"><button class="btn" id="ok" type="button">Entrer</button></div>
+      <div class="small" id="loginerr"></div>
+    </div></div>
+  </section>
+
+  <div id="panel" hidden>
+    <section class="sec">
+      <h2><span>Nouveau client</span></h2>
+      <div class="card"><div class="f">
+        <label class="l" for="label">Nom du client (visible par vous seul)</label>
+        <div class="create"><input type="text" id="label" maxlength="120" placeholder="Ex. Boulangerie Dupont"><button class="btn" id="create" type="button">Créer le lien</button></div>
+        <div id="created" hidden>
+          <p class="small" style="margin:8px 0 6px">Lien à envoyer au client :</p>
+          <div class="link" id="newlink"></div>
+          <div style="margin-top:8px"><button class="btn alt" id="copynew" type="button">Copier le lien</button></div>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="sec">
+      <h2><span>Fiches en cours</span><button class="btn alt" id="reload" type="button" style="margin-left:auto;padding:4px 10px;font-size:13px">Actualiser</button></h2>
+      <div class="card" id="list"><div class="empty">Chargement…</div></div>
+    </section>
+    <div class="actions"><button class="btn alt" id="logout" type="button">Se déconnecter</button></div>
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+var SB_URL="https://kpkvskuxvrscfhlckxls.supabase.co";
+var SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtwa3Zza3V4dnJzY2ZobGNreGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQzNDU4NTgsImV4cCI6MjEwOTkyMTg1OH0.X4UISJ6chZ1zxgfZ_cTyumjbYsnrgq9kdi1ogN439dk";
+var $=function(id){return document.getElementById(id)};
+function el(tag,attrs,kids){var e=document.createElement(tag);for(var k in (attrs||{})){if(k==="class")e.className=attrs[k];else if(k==="text")e.textContent=attrs[k];else e.setAttribute(k,attrs[k])}(kids||[]).forEach(function(c){e.appendChild(c)});return e}
+var KEY="";try{KEY=localStorage.getItem("neopix_admin_key")||""}catch(e){}
+async function rpc(fn,args){
+  var r=await fetch(SB_URL+"/rest/v1/rpc/"+fn,{method:"POST",headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json"},body:JSON.stringify(args)});
+  if(!r.ok){var e=new Error("rpc "+r.status);e.status=r.status;throw e}
+  var t=await r.text();return t?JSON.parse(t):null;
+}
+function linkFor(id,pro){var u=new URL("index.html",location.href);u.search="?c="+id+(pro?"&pro=1":"");return u.toString()}
+function copy(text,btn){
+  var done=function(){var o=btn.textContent;btn.textContent="Copié";setTimeout(function(){btn.textContent=o},1500)};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done,function(){window.prompt("Copiez ce lien :",text)})}
+  else window.prompt("Copiez ce lien :",text);
+}
+function fmtDate(s){try{return new Date(s).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"})}catch(e){return s}}
+async function load(){
+  var list=$("list");
+  try{
+    var rows=await rpc("admin_list",{p_key:KEY});
+    list.textContent="";
+    if(!rows.length){list.appendChild(el("div",{class:"empty",text:"Aucune fiche pour l’instant. Créez le lien d’un premier client ci-dessus."}));return}
+    rows.forEach(function(r){
+      var row=el("div",{class:"row"});
+      row.appendChild(el("div",{class:"t"},[el("strong",{text:r.label||"Sans nom"}),el("span",{class:"stat",text:r.answers+" réponses · "+r.files+" document"+(r.files>1?"s":"")+" · modifiée "+fmtDate(r.updated_at)})]));
+      var b=el("div",{class:"btns"});
+      var open=el("a",{class:"btn",href:linkFor(r.id,true),target:"_blank",rel:"noopener",text:"Ouvrir la fiche",style:"text-decoration:none"});
+      var cp=el("button",{class:"btn alt",type:"button",text:"Copier le lien client"});
+      cp.addEventListener("click",function(){copy(linkFor(r.id,false),cp)});
+      var del=el("button",{class:"btn danger",type:"button",text:"Supprimer"});
+      del.addEventListener("click",function(){
+        if(del.dataset.arm!=="1"){del.dataset.arm="1";del.textContent="Confirmer la suppression";setTimeout(function(){del.dataset.arm="";del.textContent="Supprimer"},4000);return}
+        rpc("admin_delete",{p_key:KEY,p_id:r.id}).then(load,function(){del.textContent="Échec"});
+      });
+      b.appendChild(open);b.appendChild(cp);b.appendChild(del);row.appendChild(b);list.appendChild(row);
+    });
+  }catch(e){list.textContent="";list.appendChild(el("div",{class:"empty",text:"Impossible de charger la liste."}))}
+}
+async function enter(k){
+  $("loginerr").textContent="";
+  try{await rpc("admin_list",{p_key:k})}catch(e){$("loginerr").textContent="Clé incorrecte.";return false}
+  KEY=k;try{localStorage.setItem("neopix_admin_key",k)}catch(e){}
+  $("login").hidden=true;$("panel").hidden=false;load();return true;
+}
+$("ok").addEventListener("click",function(){enter($("key").value.trim())});
+$("key").addEventListener("keydown",function(e){if(e.key==="Enter")enter($("key").value.trim())});
+$("logout").addEventListener("click",function(){try{localStorage.removeItem("neopix_admin_key")}catch(e){}KEY="";$("panel").hidden=true;$("login").hidden=false;$("key").value=""});
+$("reload").addEventListener("click",load);
+$("create").addEventListener("click",async function(){
+  var btn=$("create");btn.disabled=true;
+  try{
+    var id=await rpc("admin_create",{p_key:KEY,p_label:$("label").value.trim()});
+    var url=linkFor(id,false);
+    $("newlink").textContent=url;$("created").hidden=false;$("label").value="";
+    $("copynew").onclick=function(){copy(url,$("copynew"))};
+    load();
+  }catch(e){$("loginerr").textContent="Création impossible."}
+  btn.disabled=false;
+});
+if(KEY)enter(KEY);
+})();
+</script>
+</body>
+</html>
